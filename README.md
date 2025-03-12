@@ -1,13 +1,13 @@
 # LLMCode
 
-A simple terminal-based coding support tool that runs in Terminal.app, executes shell commands, tracks command history, identifies errors, and provides explanations using Ollama with the gemma3:12b model.
+A simple terminal-based coding support tool that runs in Terminal.app, executes shell commands, tracks command history, identifies errors, and provides explanations using Ollama with the qwen2.5-inst:14b model.
 
 ## Features
 
 - Execute shell commands directly from the tool
 - Save and display command history
 - Identify when commands result in errors
-- Use Ollama (with gemma3:12b model) to explain errors
+- Use Ollama (with qwen2.5-inst:14b model) to explain errors
 - Toggle between Shell mode and Chat mode using "!"
 - Automatic context information sent to Ollama for more relevant responses
 - Concise, summarized responses focused on key points
@@ -15,7 +15,7 @@ A simple terminal-based coding support tool that runs in Terminal.app, executes 
 ## Prerequisites
 
 - Node.js (v14 or later)
-- Ollama installed with the gemma3:12b model
+- Ollama installed with the qwne2.5-coder model
 
 ## Installation
 
@@ -35,13 +35,13 @@ npm install
 chmod +x index.js
 ```
 
-4. Install Ollama and the gemma3:12b model if you haven't already:
+4. Install Ollama and the qwen2.5-inst:14b model if you haven't already:
 ```
 # Install Ollama (if not installed)
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Pull the gemma3:12b model (this may take some time)
-ollama pull gemma3:12b
+# Pull the qwen2.5-coder model (this may take some time)
+ollama pull qwen2.5-coder
 ```
 
 ## Usage
@@ -74,6 +74,10 @@ npm start
    - `history` - Show chat history
    - `clear` - Clear chat history
    - `exit` - Exit the application
+   
+6. Configuration commands (available in both modes):
+   - `config` - Show current configuration
+   - `config:model <name>` - Change the Ollama model (e.g., `config:model llama3`)
 
 ## Context Information and Response Format
 

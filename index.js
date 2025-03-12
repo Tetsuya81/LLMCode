@@ -9,11 +9,20 @@ import chalk from 'chalk';
 import { fileURLToPath } from 'url';
 import os from 'os';
 
-// Get the current file path and calculate the history file path
+// Get the current file path and calculate file paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const historyFilePath = path.join(__dirname, 'history.json');
 const chatHistoryFilePath = path.join(__dirname, 'chat_history.json');
+const configFilePath = path.join(__dirname, 'config.json');
+
+// Config object with defaults
+let config = {
+  ollama: {
+    baseUrl: 'http://localhost:11434',
+    model: 'qwen2.5-coder'
+  }
+};
 
 // Mode tracking (shell or chat)
 let currentMode = 'shell'; // Default to shell mode
@@ -34,6 +43,22 @@ function updatePrompt() {
   const modeText = currentMode === 'shell' ? 'Shell' : 'Chat';
   const promptColor = currentMode === 'shell' ? chalk.blue : chalk.green;
   rl.setPrompt(promptColor(`LLMCode [${modeText}] > `));
+}
+
+// Function to load config
+async function loadConfig() {
+  try {
+    const data = await fs.readFile(configFilePath, 'utf8');
+    config = JSON.parse(data);
+  } catch (error) {
+    // If file doesn't exist or is invalid, create config with defaults
+    await fs.writeFile(configFilePath, JSON.stringify(config, null, 2));
+  }
+}
+
+// Function to save config
+async function saveConfig() {
+  await fs.writeFile(configFilePath, JSON.stringify(config, null, 2));
 }
 
 // Function to load command history
@@ -149,7 +174,7 @@ function hasErrors(commandResult) {
 
 // Function to send a message to Ollama
 async function sendChatMessage(message) {
-  console.log(chalk.yellow('Sending message to Ollama (gemma3:12b)...'));
+  console.log(chalk.yellow(`Sending message to Ollama (${config.ollama.model})...`));
   
   // Get system information to prepend to the message
   const systemInfo = await getSystemInfo();
@@ -165,13 +190,13 @@ async function sendChatMessage(message) {
   });
   
   try {
-    const response = await fetch('http://localhost:11434/api/generate', {
+    const response = await fetch(`${config.ollama.baseUrl}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemma3:12b',
+        model: config.ollama.model,
         prompt: fullPrompt,
         stream: false
       }),
@@ -199,25 +224,25 @@ async function sendChatMessage(message) {
     console.log(data.response);
     console.log(chalk.green('\n=======================\n'));
   } catch (error) {
-    console.log(chalk.red(`Failed to connect to Ollama: ${error.message}\nMake sure Ollama is running and the model 'gemma3:12b' is installed.`));
+    console.log(chalk.red(`Failed to connect to Ollama: ${error.message}\nMake sure Ollama is running and the model '${config.ollama.model}' is installed.`));
   }
 }
 
 // Function to explain error using Ollama
 async function explainError(errorText) {
-  console.log(chalk.yellow('Analyzing error using Ollama (gemma3:12b)...'));
+  console.log(chalk.yellow(`Analyzing error using Ollama (${config.ollama.model})...`));
   
   // Get system information to prepend to the message
   const systemInfo = await getSystemInfo();
   
   try {
-    const response = await fetch('http://localhost:11434/api/generate', {
+    const response = await fetch(`${config.ollama.baseUrl}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemma3:12b',
+        model: config.ollama.model,
         prompt: `${systemInfo}\n\nI got the following error in my terminal. Please explain what it means and suggest how to fix it. Be concise and focus on the key points:\n\n${errorText}`,
         stream: false
       }),
@@ -233,7 +258,7 @@ async function explainError(errorText) {
            chalk.yellow(data.response) + 
            chalk.green('\n=========================\n');
   } catch (error) {
-    return chalk.red(`Failed to connect to Ollama: ${error.message}\nMake sure Ollama is running and the model 'gemma3:12b' is installed.`);
+    return chalk.red(`Failed to connect to Ollama: ${error.message}\nMake sure Ollama is running and the model '${config.ollama.model}' is installed.`);
   }
 }
 
@@ -246,6 +271,7 @@ async function main() {
   console.log(chalk.green('Type "!" to toggle between Shell and Chat mode'));
   console.log(chalk.green('============='));
   
+  await loadConfig();
   await loadCommandHistory();
   await loadChatHistory();
   
@@ -269,11 +295,37 @@ async function main() {
       return;
     }
     
+    if (input === 'config') {
+      console.log(chalk.green('=== Current Configuration ==='));
+      console.log(chalk.yellow('Ollama Model: ') + chalk.blue(config.ollama.model));
+      console.log(chalk.yellow('Ollama URL: ') + chalk.blue(config.ollama.baseUrl));
+      console.log(chalk.green('============================'));
+      rl.prompt();
+      return;
+    }
+    
+    if (input.startsWith('config:model ')) {
+      const modelName = input.replace('config:model ', '').trim();
+      
+      if (modelName) {
+        config.ollama.model = modelName;
+        await saveConfig();
+        console.log(chalk.green(`Ollama model changed to: ${chalk.blue(modelName)}`));
+      } else {
+        console.log(chalk.red('Please provide a model name. Example: config:model llama3'));
+      }
+      
+      rl.prompt();
+      return;
+    }
+    
     if (input === 'help') {
       console.log(chalk.green('=== Available Commands ==='));
       console.log(chalk.green('!') + ' - Toggle between Shell and Chat mode');
       console.log(chalk.green('exit') + ' - Exit the application');
       console.log(chalk.green('help') + ' - Show this help message');
+      console.log(chalk.green('config') + ' - Show current configuration');
+      console.log(chalk.green('config:model <name>') + ' - Change Ollama model');
       
       if (currentMode === 'shell') {
         console.log(chalk.green('history') + ' - Show command history');
@@ -335,6 +387,12 @@ async function main() {
         return;
       }
       
+      // Check if input is empty
+      if (!input.trim()) {
+        rl.prompt();
+        return;
+      }
+      
       // Execute as shell command
       const result = await executeCommand(input);
       
@@ -344,6 +402,12 @@ async function main() {
       
     } else {
       // Chat mode
+      // Check if input is empty
+      if (!input.trim()) {
+        rl.prompt();
+        return;
+      }
+      
       if (input === 'history') {
         console.log(chalk.green('=== Chat History ==='));
         chatHistory.forEach((entry, index) => {
