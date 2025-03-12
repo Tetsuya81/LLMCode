@@ -1,0 +1,26 @@
+{
+  "name": "llmcode",
+  "version": "1.0.0",
+  "description": "A terminal coding support tool using Ollama",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "bin": {
+    "llmcode": "./index.js"
+  },
+  "keywords": [
+    "terminal",
+    "coding",
+    "ollama",
+    "llm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^9.4.0",
+    "node-fetch": "^2.6.7"
+  },
+  "type": "module"
+}

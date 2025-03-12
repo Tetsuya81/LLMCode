@@ -1,0 +1,10 @@
+[
+  {
+    "command": "ls -a",
+    "timestamp": "2025-03-12T15:59:50.024Z",
+    "exitCode": 0,
+    "output": ".\n..\n.env\n.git\n.gitignore\n.python-version\n.venv\nREADME.md\nhello.py\npyproject.toml\nscripts\nuv.lock\n",
+    "error": "",
+    "hasError": false
+  }
+]
