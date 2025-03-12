@@ -7,6 +7,3 @@ node_modules/
 # History files
 chat_history.json
 history.json
-
-# Config files
-config.json
