@@ -1,0 +1,12 @@
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+
+# History files
+chat_history.json
+history.json
+
+# Config files
+config.json

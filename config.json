@@ -1,0 +1,6 @@
+{
+  "ollama": {
+    "baseUrl": "http://localhost:11434",
+    "model": "phi4:14b"
+  }
+}
